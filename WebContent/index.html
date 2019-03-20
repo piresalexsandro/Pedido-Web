@@ -2,9 +2,59 @@
 <html>
 <head>
 <meta charset="ISO-8859-1">
-<title>Pedido</title>
+<title>Cadastro</title>
 </head>
 <body>
-	<h1>Cadastro de pedidos</h1>
+	<h1>Cadastro</h1>
+	<fieldset>
+		<legend>Formulário de cadastro</legend>
+		<form action="cadastro" method="POST">
+			<div align="center">
+			  <table>	
+				<tr>
+				  <td>
+					<label>Nome</label>
+					<input type="text" name="nome"/>	  
+				  </td>
+				</tr>
+				 
+				<tr>
+				  <td>
+					<label>Email</label> 
+					<input type="email" name="email"/> 
+				  </td>
+				</tr>
+				 
+				<tr>
+				  <td>
+					<label>Idade</label> 
+					<input type="text" name="idade"/> 
+				  </td>
+				</tr>
+				 
+				<tr>
+				  <td>
+					<label>Salário</label>
+					<input type="number" step="0.01" name="salario"/> 
+				  </td>
+				</tr>
+				 
+				<tr>
+				  <td>
+					<label>Data de nascimento</label> 
+					<input type="date" name="data"/>
+				  </td>
+				</tr>
+				 
+				<tr>
+				  <td>
+					<button type="submit">Cadastrar</button>
+				  </td>
+				</tr>
+				 
+			  </table>	
+		   </div>
+		</form>
+	</fieldset>
 </body>
 </html>
