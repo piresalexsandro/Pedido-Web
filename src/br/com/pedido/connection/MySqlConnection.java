@@ -17,7 +17,7 @@ public class MySqlConnection {
 		if (conn == null) {
 			try {
 				Properties props = loadProperties();
-				String url = props.getProperty("dburl");
+				String url = props.getProperty("estudos");
 				conn = DriverManager.getConnection(url, props);
 			}
 			catch (SQLException e) {

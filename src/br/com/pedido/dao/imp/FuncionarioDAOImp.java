@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import br.com.pedido.connection.MySqlConnection;
 import br.com.pedido.connection.MySqlException;
 import br.com.pedido.dao.FuncionarioDAO;
@@ -36,16 +35,15 @@ public class FuncionarioDAOImp implements FuncionarioDAO {
 		
 		try {
 			st = conn.prepareStatement(
-					   "INSERT INTO Funcionario " + 
+					   "INSERT INTO funcionario " + 
 							   "(CD_FUN), " + 	
 							   "(NM_FUN), " + 	
 							   "(EMAIL_FUN), " + 
 							   "(IDADE), " + 	
 							   "(DT_ADMIS), " + 
 							   "(DT_DEMIS), " + 
-							   "(VL_SAL), " + 	
-							   "(DT_CRIACAO) " +
-							   "VALUES (?,?,?,?,?,?,?,?,)",
+							   "(VL_SAL) " + 	
+							   "VALUES (NULL,?,?,?,?,?,?)",
 					   Statement.RETURN_GENERATED_KEYS
  					   );
 			
