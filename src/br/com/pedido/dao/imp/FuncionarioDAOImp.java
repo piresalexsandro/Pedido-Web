@@ -4,174 +4,160 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import br.com.pedido.connection.MySqlConnection;
-import br.com.pedido.connection.MySqlException;
-import br.com.pedido.dao.FuncionarioDAO;
+
+import br.com.pedido.connection.MySQLConnection;
+import br.com.pedido.dao.IFuncionarioDAO;
 import br.com.pedido.entity.Funcionario;
 
-public class FuncionarioDAOImp implements FuncionarioDAO {
+public class FuncionarioDAOImp extends MySQLConnection implements IFuncionarioDAO {
 
-	private Connection conn;
+	private static final long serialVersionUID = 1L;
 	
+	private Connection conn = null;
+    private PreparedStatement ps = null;
+    private ResultSet rs = null;
+    
 	public FuncionarioDAOImp(Connection conn) {
 		this.conn = conn;
-	}
-
-	private Funcionario instatiateFuncionario(ResultSet rs) throws SQLException {
-		Funcionario dep = new Funcionario();
-		dep.setId(rs.getLong("Id"));
-		dep.setNome(rs.getString("Name"));
-		return dep;
 	}
 			
 	@Override
 	public void insert(Funcionario obj) {
-		PreparedStatement st = null;
 		
 		try {
-			st = conn.prepareStatement(
-					   "INSERT INTO funcionario " + 
-							   "(CD_FUN), " + 	
-							   "(NM_FUN), " + 	
-							   "(EMAIL_FUN), " + 
-							   "(IDADE), " + 	
-							   "(DT_ADMIS), " + 
-							   "(DT_DEMIS), " + 
-							   "(VL_SAL) " + 	
-							   "VALUES (NULL,?,?,?,?,?,?)",
-					   Statement.RETURN_GENERATED_KEYS
- 					   );
+			conn = getConnection();
+			StringBuilder query = new StringBuilder();
 			
-			st.setString(1, obj.getNome());
-		
-			int rowsAffected = st.executeUpdate();
+    		query.append("INSERT INTO funcionario (CD_FUN, NM_FUN, EMAIL_FUN, IDADE, DT_ADMIS, DT_DEMIS, VL_SAL) "); 	
+			query.append("VALUES (NULL,?,?,?,?,?,?)");
+			
+			ps = conn.prepareStatement(query.toString());
+			
+			ps.setString(1, obj.getNome());
+			ps.setString(2, obj.getEmail());
+			ps.setInt(3, obj.getIdade());
+			ps.setDate(4, obj.getDataAdmissao());
+		    ps.setDate(5, obj.getDataDemissao());
+			ps.setBigDecimal(6, obj.getSalario());
+			
+			ps.executeUpdate();
+			
+			ps.close();
+			conn.close();
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
-		catch(SQLException e) {
-			throw new MySqlException(e.getMessage());
-		}
-		finally {
-			MySqlConnection.closeStatement(st);
-		}
-		
 	}
 
 	@Override
 	public void update(Funcionario obj) {
-		PreparedStatement st = null;
+		
 		try {
-			st = conn.prepareStatement(
-					"UPDATE Funcionario "
-					+  "SET NM_FUN      = ? " 
-					+  "   ,EMAIL_FUN   = ? "
-					+  "   ,IDADE	  	= ? " 
-					+  "   ,DT_ADMIS    = ? "
-					+  "   ,DT_DEMIS    = ? "
-					+  "   ,VL_SAL	  	= ? " 
-			//+  "   ,DT_CRIACAO  = ? "
-					+"WHERE CD_FUN = ? "
-							);
+			conn = getConnection();
+			StringBuilder query = new StringBuilder();
+			query.append("UPDATE Funcionario SET NM_FUN = ? "); 
+			query.append(",EMAIL_FUN = ? ");
+			query.append(",IDADE	= ? " );
+			query.append(",DT_ADMIS = ? ");
+			query.append(",DT_DEMIS = ? ");
+			query.append(",VL_SAL = ? "); 
+			//query.append(",DT_CRIACAO  = ? ");
+			query.append(",WHERE CD_FUN = ? ");
 			
-			st.setString(1, obj.getNome());
-			st.setString(2, obj.getEmail());
-			st.setInt(3, obj.getIdade());
-			st.setDate(4, obj.getDataAdmissao());
-			st.setDate(5, obj.getDataDemissao());
-			st.setBigDecimal(6, obj.getSalario());
-		//  st.setDate(7, obj.getData());
-			st.executeUpdate();
-		}
-		catch(SQLException e) {
-			throw new MySqlException(e.getMessage());
-		}
-		finally {
-			MySqlConnection.closeStatement(st);
+			ps.setString(1, obj.getNome());
+			ps.setString(2, obj.getEmail());
+			ps.setInt(3, obj.getIdade());
+			ps.setDate(4, obj.getDataAdmissao());
+			ps.setDate(5, obj.getDataDemissao());
+			ps.setBigDecimal(6, obj.getSalario());
+		//  ps.setDate(7, obj.getData());
+			ps.executeUpdate();
+			
+		} catch (SQLException exc) {
+			throw new RuntimeException(exc);
+		} finally {
+			closeConnection(rs,ps,conn);
 		}
 	}
 
 	@Override
-	public void deleteById(Integer id) {
-		PreparedStatement st = null;
+	public void deleteById(Long id) {
 		try {
-			st = conn.prepareStatement("DELETE FROM Funcionario WHERE CD_FUN = ?");
+			conn = getConnection();
+			StringBuilder query = new StringBuilder();
+			query.append("DELETE FROM Funcionario WHERE CD_FUN = ?");
 			
-			st.setLong(1, id);
+			ps.setLong(1, id);
+			ps.executeQuery();
 			
-			st.executeUpdate();
-		}
-		catch(SQLException e) {
-			throw new MySqlException(e.getMessage());
-		}
-		finally {
-			MySqlConnection.closeStatement(st);
+		}catch (SQLException exc) {
+			throw new RuntimeException(exc);
+		} finally {
+			closeConnection(rs,ps,conn);
 		}
 	}
 
 	@Override
-	public Funcionario findById(Integer id) {
-		PreparedStatement st = null;
-		ResultSet rs = null;
+	public Funcionario findById(Long id) {
+		
 		try {
-			st = conn.prepareStatement(
-					   "SELECT FUNCIONARIO.* "
-				     +   "FROM FUNCIONARIO " 
-				     +  "WHERE CD_FUN = ? ");
-			st.setInt(1, id);
-			rs = st.executeQuery();
+			conn = getConnection();
+			StringBuilder query = new StringBuilder();
+			query.append("SELECT FUNCIONARIO.* FROM FUNCIONARIO "); 
+			query.append("WHERE CD_FUN = ? ");
+			ps.setLong(1, id);
+			rs = ps.executeQuery();
 			
 			//next pq a posição 0 e nula entao pegarmos a proximas
 			if (rs.next()) {
-				Funcionario fun = instatiateFuncionario(rs);				
-				return fun;
+				Funcionario resultado = new Funcionario();
+				resultado.setId(rs.getLong("CD_FUN"));
+				resultado.setNome(rs.getString("NM_FUN"));
+				resultado.setEmail(rs.getString("EMAIL_FUN"));
+				resultado.setIdade(rs.getInt("IDADE"));
+				resultado.setDataAdmissao(rs.getDate("DT_ADMIS"));
+				resultado.setDataAdmissao(rs.getDate("DT_DEMIS"));
+				resultado.setSalario(rs.getBigDecimal("VL_SAL"));
+				return resultado;
 			}
 			return null;
-		}
-		catch(SQLException e) {
-			throw new MySqlException(e.getMessage());
-		}
-		finally {
-			MySqlConnection.closeStatement(st);
-			MySqlConnection.closeResultSet(rs);
+		}catch (SQLException exc) {
+			throw new RuntimeException(exc);
+		} finally {
+			closeConnection(rs,ps,conn);
 		}
 	}
 
 	@Override
 	public List<Funcionario> findAll() {
-		PreparedStatement st = null;
-		ResultSet rs = null;
 		try {
-			st = conn.prepareStatement(
-					        "SELECT *"
-					      + "  FROM Funcionario ");
-					
-			rs = st.executeQuery();
-
-			List<Funcionario> Funcionarios = new ArrayList<>();
-			Map<Long, String> map = new HashMap<>();
+			conn = getConnection();
+			StringBuilder query = new StringBuilder();
+			query.append("SELECT FUNCIONARIO.* FROM FUNCIONARIO "); 
+			rs = ps.executeQuery();
 			
+			//next pq a posição 0 e nula entao pegarmos a proximas
 			while (rs.next()) {
-				String obj = map.get(rs.getLong("Id"));
-				Funcionario fun = instatiateFuncionario(rs);	
-				
-				if (obj == null) {
-					fun = instatiateFuncionario(rs);	
-					map.put(rs.getLong("Id"), rs.getString("Nome"));
-				}	
-				
-				Funcionarios.add(fun);
+				List<Funcionario> listaFunc = new ArrayList<>();
+				Funcionario resultado = new Funcionario();
+				resultado.setId(rs.getLong("CD_FUN"));
+				resultado.setNome(rs.getString("NM_FUN"));
+				resultado.setEmail(rs.getString("EMAIL_FUN"));
+				resultado.setIdade(rs.getInt("IDADE"));
+				resultado.setDataAdmissao(rs.getDate("DT_ADMIS"));
+				resultado.setDataAdmissao(rs.getDate("DT_DEMIS"));
+				resultado.setSalario(rs.getBigDecimal("VL_SAL"));
+				listaFunc.add(resultado);
+				return listaFunc;
 			}
-			return Funcionarios;
-		}
-		catch(SQLException e) {
-			throw new MySqlException(e.getMessage());
-		}
-		finally {
-			MySqlConnection.closeStatement(st);
-			MySqlConnection.closeResultSet(rs);
+			return null;
+		}catch (SQLException exc) {
+			throw new RuntimeException(exc);
+		}finally {
+			closeConnection(rs,ps,conn);
 		}
 	}
 

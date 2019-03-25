@@ -1,71 +1,114 @@
 package br.com.pedido.connection;
 
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.Serializable;
 import java.sql.Connection;
-import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Properties;
 
-public class MySqlConnection {
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
 
-	private static Connection conn = null;
+/**
+ * Classe de conexão SQL Server.
+ * @author Leandro Ferreira
+ */
+public class MySQLConnection implements Serializable{
 	
-	public static Connection getConnection() {
-		if (conn == null) {
-			try {
-				Properties props = loadProperties();
-				String url = props.getProperty("estudos");
-				conn = DriverManager.getConnection(url, props);
-			}
-			catch (SQLException e) {
-				throw new MySqlException(e.getMessage());
-			}
-		}
-		return conn;
-	}
-	
-	public static void closeConnection() {
-		if (conn != null) {
-			try {
-				conn.close();
-			}
-			catch (SQLException e) {
-				throw new MySqlException(e.getMessage());
-			}
-		}
-	}
-	
-	private static Properties loadProperties() {
-		try (FileInputStream fs = new FileInputStream("db.properties")){
-			Properties props = new Properties();
-			props.load(fs);
-			return props;
-		}catch(IOException e) {
-			throw new MySqlException(e.getMessage());
-		}
-	}
-	
-	public static void closeStatement(Statement st) {
-		if (st != null) {
-			try {
-				st.close();
-			} catch (SQLException e) {
-				throw new MySqlException(e.getMessage());
-			}
-		}
-	}
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-	public static void closeResultSet(ResultSet rs) {
-		if (rs != null) {
-			try {
-				rs.close();
-			} catch (SQLException e) {
-				throw new MySqlException(e.getMessage());
-			}
-		}
-	}
-	
+	/**
+     * Recupera a conexão.
+     * @return Connection
+     * @throws SQLException Connection
+     */
+    public Connection getConnection() throws SQLException {
+        Connection resultado = null;
+        try {
+            InitialContext context = new InitialContext();
+            DataSource ds = (DataSource) context.lookup("java:comp/env/jdbc/mysql");
+            resultado = ds.getConnection();
+        } catch (NamingException exc) {
+            throw new RuntimeException(exc);
+        }
+        return resultado;
+    }
+    
+    /**
+     * Fecha o resultset o statement e a conexão.
+     * @param paramResultSet {@link ResultSet}
+     * @param paramPreparedStatement {@link PreparedStatement}
+     * @param paramConnection {@link Connection}
+     */
+    public void closeConnection(ResultSet paramResultSet,PreparedStatement paramPreparedStatement, 
+    		Connection paramConnection) {
+        closeResultSet(paramResultSet);
+        closeStatement(paramPreparedStatement);
+        closeConnection(paramConnection);
+    }
+
+    /**
+     * Fecha a conexão e o prepared statement.
+     * @param paramConnection {@link Connection}
+     * @param paramPreparedStatement void {@link PreparedStatement}
+     */
+    public void closeConnection(Connection paramConnection,
+        PreparedStatement paramPreparedStatement) {
+        closeStatement(paramPreparedStatement);
+        closeConnection(paramConnection);
+    }
+
+    private void closeResultSet(ResultSet paramResultSet) {
+        if (paramResultSet != null) {
+            try {
+                paramResultSet.close();
+            } catch (SQLException exc) {
+                throw new RuntimeException(exc);
+            }
+        }
+    }
+
+    private void closeStatement(PreparedStatement paramPreparedStatement) {
+        if (paramPreparedStatement != null) {
+            try {
+                paramPreparedStatement.close();
+            } catch (SQLException exc) {
+                throw new RuntimeException(exc);
+            }
+        }
+    }
+
+    private void closeConnection(Connection paramConnection) {
+        if (paramConnection != null) {
+            try {
+                paramConnection.close();
+            } catch (SQLException exc) {
+                throw new RuntimeException(exc);
+            }
+        }
+    }
+
+    //@Override
+    public boolean isAlive() {
+        boolean retorno = true;
+        Connection con = null;
+
+        try {
+            con = getConnection();
+            Statement st = con.createStatement();
+            st.execute("SELECT 1");
+        } catch (Exception ex) {
+            retorno = false;
+        } finally {
+            this.closeConnection(con);
+        }
+
+        return retorno;
+    }
+
 }

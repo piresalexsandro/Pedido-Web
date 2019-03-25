@@ -2,7 +2,7 @@ package br.com.pedido.servlets;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Date;
+//import java.util.Date;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import br.com.pedido.dao.FuncionarioDAO;
+import br.com.pedido.dao.IFuncionarioDAO;
 import br.com.pedido.dao.imp.FuncionarioDAOImp;
 import br.com.pedido.entity.Funcionario;
 
@@ -39,7 +39,7 @@ public class Cadastro extends HttpServlet {
 		funcionario.setIdade(idade);
 		funcionario.setSalario(salario);
         
-		FuncionarioDAO dao = new FuncionarioDAOImp(null);
+		IFuncionarioDAO dao = new FuncionarioDAOImp(null);
 		dao.insert(funcionario);
 		
 		resp.sendRedirect("index.html");
